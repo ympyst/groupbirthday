@@ -48,7 +48,7 @@ func (*GroupBirthdayServer) GetMemberId(ctx context.Context, req *contract.GetMe
 func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contract.GetMemberBirthdaysRequest) (*contract.GetMemberBirthdaysReply, error) {
 	fmt.Printf("➡️ GetMemberBirthdaysRequest: %v\n", req)
 	var group []groupdb.Group
-	db.First(&group)
+	db.Where("name = ?", req.GroupName).Take(&group)
 	var members []groupdb.Member
 	db.Model(&group).Related(&members, "Members")
 	reply := &contract.GetMemberBirthdaysReply{}

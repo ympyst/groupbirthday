@@ -25,7 +25,7 @@ message GetMemberIdReply {
 }
 
 message GetMemberBirthdaysRequest {
-    int32 groupName = 1;
+    string groupName = 1;
 }
 
 message GetMemberBirthdaysReply {
