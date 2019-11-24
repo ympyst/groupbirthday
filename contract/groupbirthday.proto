@@ -1,9 +1,9 @@
 syntax = "proto3";
-package groupbirthday;
 
 service GroupBirthday {
     rpc GetGroups (GetGroupsRequest) returns (GetGroupsReply) {}
     rpc GetMemberId (GetMemberIdRequest) returns (GetMemberIdReply) {}
+    rpc GetMemberBirthdays (GetMemberBirthdaysRequest) returns (GetMemberBirthdaysReply) {}
 }
 
 message GetGroupsRequest {
@@ -22,5 +22,20 @@ message GetMemberIdRequest {
 
 message GetMemberIdReply {
     int32 memberId = 1;
+}
+
+message GetMemberBirthdaysRequest {
+    int32 groupName = 1;
+}
+
+message GetMemberBirthdaysReply {
+    repeated MemberBirthday memberBirthdays = 1;
+}
+
+message MemberBirthday {
+    string firstName = 1;
+    string lastName = 2;
+    int32 day = 3;
+    int32 month = 4;
 }
 

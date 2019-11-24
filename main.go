@@ -6,34 +6,69 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"google.golang.org/grpc"
-	"groupbirthday/proto"
+	contract "groupbirthday/contract"
 	"groupbirthday/groupdb"
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 var db *gorm.DB
 
 type GroupBirthdayServer struct {
-	proto.UnimplementedGroupBirthdayServer
+	contract.UnimplementedGroupBirthdayServer
 }
 
-func (*GroupBirthdayServer) GetGroups(ctx context.Context, req *proto.GetGroupsRequest) (*proto.GetGroupsReply, error) {
+func (*GroupBirthdayServer) GetGroups(ctx context.Context, req *contract.GetGroupsRequest) (*contract.GetGroupsReply, error) {
+	fmt.Println(req)
+
 	var member groupdb.Member
 	db.First(&member, req.MemberId)
 	var groups []groupdb.Group
 	db.Model(&member).Related(&groups, "Groups")
-	reply := &proto.GetGroupsReply{}
+	reply := &contract.GetGroupsReply{}
 	for _, group := range groups {
 		reply.Groups = append(reply.Groups, group.Name)
 	}
+
+	fmt.Println(reply)
 	return reply, nil
 }
-func (*GroupBirthdayServer) GetMemberId(ctx context.Context, req *proto.GetMemberIdRequest) (*proto.GetMemberIdReply, error) {
+func (*GroupBirthdayServer) GetMemberId(ctx context.Context, req *contract.GetMemberIdRequest) (*contract.GetMemberIdReply, error) {
+	fmt.Println(req)
+
 	var member groupdb.Member
 	db.Where("telegram_username = ?", req.TelegramUsername).Take(&member)
-	reply := &proto.GetMemberIdReply{MemberId: int32(member.ID)}
+	reply := &contract.GetMemberIdReply{MemberId: int32(member.ID)}
+
+	fmt.Println(reply)
+	return reply, nil
+}
+func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contract.GetMemberBirthdaysRequest) (*contract.GetMemberBirthdaysReply, error) {
+	fmt.Println(req)
+	var group []groupdb.Group
+	db.First(&group)
+	var members []groupdb.Member
+	db.Model(&group).Related(&members, "Members")
+	reply := &contract.GetMemberBirthdaysReply{}
+
+	for _, member := range members {
+		bd, err := time.Parse(time.RFC3339, member.Birthday)
+		if err != nil {
+			panic(err)
+		}
+		month := bd.Month()
+		day := bd.Day()
+		reply.MemberBirthdays = append(reply.MemberBirthdays, &contract.MemberBirthday{
+			FirstName:            member.FirstName,
+			LastName:             member.LastName,
+			Day:                  int32(day),
+			Month:                int32(month),
+		})
+	}
+
+	fmt.Println(reply)
 	return reply, nil
 }
 
@@ -55,6 +90,6 @@ func main() {
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
 	gbdServer := &GroupBirthdayServer{}
-	proto.RegisterGroupBirthdayServer(grpcServer, gbdServer)
+	contract.RegisterGroupBirthdayServer(grpcServer, gbdServer)
 	grpcServer.Serve(lis)
 }
