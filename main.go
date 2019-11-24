@@ -21,7 +21,7 @@ type GroupBirthdayServer struct {
 }
 
 func (*GroupBirthdayServer) GetGroups(ctx context.Context, req *contract.GetGroupsRequest) (*contract.GetGroupsReply, error) {
-	fmt.Println(req)
+	fmt.Printf("➡️ GetGroupsRequest: %v\n", req)
 
 	var member groupdb.Member
 	db.First(&member, req.MemberId)
@@ -32,21 +32,21 @@ func (*GroupBirthdayServer) GetGroups(ctx context.Context, req *contract.GetGrou
 		reply.Groups = append(reply.Groups, group.Name)
 	}
 
-	fmt.Println(reply)
+	fmt.Printf("⬅️ GetGroupsReply: %v\n", reply)
 	return reply, nil
 }
 func (*GroupBirthdayServer) GetMemberId(ctx context.Context, req *contract.GetMemberIdRequest) (*contract.GetMemberIdReply, error) {
-	fmt.Println(req)
+	fmt.Printf("➡️ GetMemberIdRequest: %v\n", req)
 
 	var member groupdb.Member
 	db.Where("telegram_username = ?", req.TelegramUsername).Take(&member)
 	reply := &contract.GetMemberIdReply{MemberId: int32(member.ID)}
 
-	fmt.Println(reply)
+	fmt.Printf("⬅️ GetMemberIdReply: %v\n", reply)
 	return reply, nil
 }
 func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contract.GetMemberBirthdaysRequest) (*contract.GetMemberBirthdaysReply, error) {
-	fmt.Println(req)
+	fmt.Printf("➡️ GetMemberBirthdaysRequest: %v\n", req)
 	var group []groupdb.Group
 	db.First(&group)
 	var members []groupdb.Member
@@ -68,7 +68,7 @@ func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contrac
 		})
 	}
 
-	fmt.Println(reply)
+	fmt.Printf("⬅️ GetMemberBirthdaysReply: %v\n", reply)
 	return reply, nil
 }
 
