@@ -12,6 +12,7 @@ type Member struct {
 	LastName         string
 	Birthday         string
 	TelegramUsername string
+	TelegramUserId   int32
 	Groups           []Group `gorm:"many2many:group_members;"`
 }
 
