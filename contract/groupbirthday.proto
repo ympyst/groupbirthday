@@ -1,9 +1,12 @@
 syntax = "proto3";
+package contract;
+option go_package = ".;contract";
 
 service GroupBirthday {
     rpc GetGroups (GetGroupsRequest) returns (GetGroupsReply) {}
     rpc GetMemberId (GetMemberIdRequest) returns (GetMemberIdReply) {}
     rpc GetMemberBirthdays (GetMemberBirthdaysRequest) returns (GetMemberBirthdaysReply) {}
+    rpc SaveMember (SaveMemberRequest) returns (SaveMemberReply) {}
 }
 
 message GetGroupsRequest {
@@ -37,5 +40,18 @@ message MemberBirthday {
     string lastName = 2;
     int32 day = 3;
     int32 month = 4;
+}
+
+message SaveMemberRequest {
+    string firstName = 1;
+    string lastName = 2;
+    string telegramUsername = 3;
+    int32 telegramUserId = 4;
+    int64 telegramChatId = 5;
+    string telegramChatName = 6;
+}
+
+message SaveMemberReply {
+    int32 memberId = 1;
 }
 

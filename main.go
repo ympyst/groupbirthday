@@ -11,7 +11,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 )
 
 var db *gorm.DB
@@ -54,12 +53,11 @@ func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contrac
 	reply := &contract.GetMemberBirthdaysReply{}
 
 	for _, member := range members {
-		bd, err := time.Parse(time.RFC3339, member.Birthday)
-		if err != nil {
-			panic(err)
+		if member.Birthday == nil {
+			continue
 		}
-		month := bd.Month()
-		day := bd.Day()
+		month := member.Birthday.Month()
+		day := member.Birthday.Day()
 		reply.MemberBirthdays = append(reply.MemberBirthdays, &contract.MemberBirthday{
 			FirstName:            member.FirstName,
 			LastName:             member.LastName,
@@ -69,6 +67,35 @@ func (*GroupBirthdayServer) GetMemberBirthdays(ctx context.Context, req *contrac
 	}
 
 	fmt.Printf("⬅️ GetMemberBirthdaysReply: %v\n", reply)
+	return reply, nil
+}
+
+func (*GroupBirthdayServer) SaveMember(ctx context.Context, req *contract.SaveMemberRequest) (*contract.SaveMemberReply, error) {
+	fmt.Printf("➡️ SaveMemberRequest: %v\n", req)
+	var member groupdb.Member
+	db.Where("telegram_user_id = ?", req.TelegramUserId).Take(&member)
+
+	if member.ID == 0 {
+		member.TelegramUserId = req.TelegramUserId
+		member.TelegramUsername = req.TelegramUsername
+		member.FirstName = req.FirstName
+		member.LastName = req.LastName
+		db.Create(&member)
+	}
+
+	var group groupdb.Group
+	db.Where("telegram_chat_id = ?", req.TelegramChatId).Take(&group)
+
+	if group.ID == 0 {
+		group.Name = req.TelegramChatName
+		group.TelegramChatId = req.TelegramChatId
+		db.Create(&group)
+	}
+
+	db.Model(&group).Association("Members").Append(member)
+
+	reply := &contract.SaveMemberReply{MemberId: int32(member.ID)}
+	fmt.Printf("⬅️ SaveMemberReply: %v\n", reply)
 	return reply, nil
 }
 

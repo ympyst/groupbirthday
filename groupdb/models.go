@@ -1,19 +1,23 @@
 package groupdb
 
+import "time"
+
 type Group struct {
-	ID      int
-	Name    string
-	Members []Member `gorm:"many2many:group_members;"`
+	ID      		int			`gorm:"AUTO_INCREMENT"`
+	Name    		string
+	TelegramChatId	int64		`gorm:"unique"`
+	Members 		[]Member 	`gorm:"many2many:group_members;unique"`
+	Description 	string
 }
 
 type Member struct {
-	ID               int
+	ID               int			`gorm:"AUTO_INCREMENT"`
 	FirstName        string
 	LastName         string
-	Birthday         string
-	TelegramUsername string
-	TelegramUserId   int32
-	Groups           []Group `gorm:"many2many:group_members;"`
+	Birthday         *time.Time		`gorm:"default:NULL"`
+	TelegramUsername string			`gorm:"unique"`
+	TelegramUserId   int32			`gorm:"unique"`
+	Groups           []Group		`gorm:"many2many:group_members;"`
 }
 
 type Fundraiser struct {
