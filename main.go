@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -10,10 +11,16 @@ import (
 	"groupbirthday/groupdb"
 	"log"
 	"net"
+	"net/http"
 	"os"
+	"time"
 )
 
 var db *gorm.DB
+
+type TutuBirthdayResponse struct {
+	Birthday string
+}
 
 type GroupBirthdayServer struct {
 	contract.UnimplementedGroupBirthdayServer
@@ -96,6 +103,54 @@ func (*GroupBirthdayServer) SaveMember(ctx context.Context, req *contract.SaveMe
 
 	reply := &contract.SaveMemberReply{MemberId: int32(member.ID)}
 	fmt.Printf("⬅️ SaveMemberReply: %v\n", reply)
+	return reply, nil
+}
+
+func (*GroupBirthdayServer) ImportBirthdaysFromTutu(ctx context.Context, req *contract.ImportBirthdaysFromTutuRequest) (*contract.ImportBirthdaysFromTutuResponse, error) {
+	fmt.Printf("➡️ ImportBirthdaysFromTutuRequest: %v\n", req)
+	var members []groupdb.Member
+	db.Where("birthday IS NULL").Find(&members)
+
+	client := &http.Client{}
+	tutuBirthdayHost := os.Getenv("TUTU_BIRTHDAY_HOST")
+
+	for _, member := range members {
+		fmt.Printf("telegram_user_name: %v\n", member.TelegramUsername)
+
+		if member.TelegramUsername != "" {
+			req, err := http.NewRequest("GET", tutuBirthdayHost + "/api/birthday/?telegram_user_id=" + member.TelegramUsername, nil)
+			if err != nil {
+				fmt.Printf("Error %v\n", err.Error())
+				continue
+			}
+			req.Header.Add("Authorization", "Basic " + os.Getenv("TUTU_BASIC_AUTH"))
+			resp, err := client.Do(req)
+			if err != nil {
+				fmt.Printf("Error getting %v, %v", member.TelegramUsername, err.Error())
+				continue
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode == http.StatusOK {
+				var birthdayResponse TutuBirthdayResponse
+				err := json.NewDecoder(resp.Body).Decode(&birthdayResponse)
+				if err != nil {
+					fmt.Printf("Error %v\n", err.Error())
+					continue
+				}
+				fmt.Printf("Response: %v\n", birthdayResponse)
+				birthday, err := time.Parse(time.RFC3339, birthdayResponse.Birthday + "T00:00:00Z")
+				if err != nil {
+					fmt.Printf("Error %v\n", err.Error())
+					continue
+				}
+				member.Birthday = &birthday
+				db.Save(member)
+			}
+		}
+	}
+
+	reply := &contract.ImportBirthdaysFromTutuResponse{UpdatedCount: 0}
+	fmt.Printf("⬅️ ImportBirthdaysFromTutuResponse: %v\n", reply)
 	return reply, nil
 }
 

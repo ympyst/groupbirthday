@@ -7,6 +7,7 @@ service GroupBirthday {
     rpc GetMemberId (GetMemberIdRequest) returns (GetMemberIdReply) {}
     rpc GetMemberBirthdays (GetMemberBirthdaysRequest) returns (GetMemberBirthdaysReply) {}
     rpc SaveMember (SaveMemberRequest) returns (SaveMemberReply) {}
+    rpc ImportBirthdaysFromTutu (ImportBirthdaysFromTutuRequest) returns (ImportBirthdaysFromTutuResponse) {}
 }
 
 message GetGroupsRequest {
@@ -53,5 +54,14 @@ message SaveMemberRequest {
 
 message SaveMemberReply {
     int32 memberId = 1;
+}
+
+message ImportBirthdaysFromTutuRequest {
+    string login = 1;
+    string password = 2;
+}
+
+message ImportBirthdaysFromTutuResponse {
+    int32 updatedCount = 1;
 }
 

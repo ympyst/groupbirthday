@@ -1,8 +1,7 @@
 FROM golang:latest
-RUN go get -u github.com/golang/dep/cmd/dep
 WORKDIR /go/src/groupbirthday
 COPY . .
-RUN dep init && dep ensure
-RUN	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build .
+RUN mkdir bin
+RUN	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/ groupbirthday
 
-CMD ["./groupbirthday"]
+CMD ["./bin/groupbirthday"]
